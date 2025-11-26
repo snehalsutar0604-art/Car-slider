@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Car Color Slider</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --bg: #e5e7eb;
+      --panel-bg: #ffffff;
+      --text-main: #222222;
+      --text-soft: #8c8c8c;
+      --accent: #1e3a8a;
+      --accent-soft: #60a5fa;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.15);
+      --radius-lg: 26px;
+      --transition-fast: 0.4s ease;
+      --transition-med: 0.6s ease;
+      --font-heading: "Playfair Display", "Times New Roman", serif;
+      --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      /* आता body bg हलका आहे, आणि JS मध्ये car नुसार बदलतो */
+      background: #e5e7eb;
+      font-family: var(--font-body);
+      transition: background 0.6s ease;
+        background: #ececec !important;
+    }
+
+    /* ===== SECTION WRAPPER ===== */
+    .car-slider-section {
+      width: 100%;
+     height: 100%;
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ===== “TABLET” CONTAINER ===== */
+    .car-slider-frame {
+    width: min(1400px, 95%);
+
+      aspect-ratio: 16 / 9;
+      /* हे gradient JS मधून car.background ने बदलणार आहे */
+      background: radial-gradient(circle at top, #fdfefe 0%, #f3f4f6 55%, #e5e7eb 100%);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      padding: 2.2rem 3rem 2.5rem;
+      overflow: hidden;
+     
+        transition: background 0.8s ease;
+  background: radial-gradient(circle at center, #ffffff 20%, #dfe3e8 100%);
+    }
+
+
+    .car-slider-frame::before {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border-radius: calc(var(--radius-lg) - 12px);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      pointer-events: none;
+    }
+
+    .car-slider-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 1;
+    }
+
+    /* ===== TOP TEXT ===== */
+    .car-top-text {
+      text-align: center;
+      font-size: 0.9rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      margin-bottom: 0.6rem;
+    }
+
+    .car-model-name {
+      text-align: center;
+      font-family: cursive;
+      font-size: 1.1rem;
+      color: #6b7280;
+      margin-bottom: 0.4rem;
+    }
+.car-main-title{
+  position:absolute;
+  top:20%;
+  left:0%;
+  transform:translate(-50%, -50%);
+  width:100%;
+  text-align:center;
+
+  font-family:"Playfair Display";
+  font-weight:900;
+  color:rgba(50,50,50,.9);
+  letter-spacing:0.18em;
+
+  /* RESPONSIVE FONT */
+font-size: 4.3rem;
+
+  white-space:nowrap;
+  pointer-events:none;
+}
+
+    /* ===== CAR IMAGE AREA ===== */
+    .car-visual {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      margin-top: 0.5rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .car-image-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      z-index: 2;
+      transform-origin: center center;
+    }
+
+    .car-image {
+      width: 100%;
+  
+      height: 500px;
+      display: block;
+      filter: drop-shadow(0 32px 28px rgba(15, 23, 42, 0.35));
+      transform: translateY(0);
+      transition:
+        transform var(--transition-med),
+        opacity var(--transition-med);
+    }
+
+    .car-floor-shadow {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      bottom: -10px;
+      height: 26px;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(15, 23, 42, 0.4) 0%,
+        transparent 65%
+      );
+      opacity: 0.7;
+      z-index: -1;
+    }
+
+    .car-image-wrapper.entering .car-image {
+      opacity: 0;
+      transform: translateY(50px) scale(0.9);
+    }
+    .car-image-wrapper.active .car-image {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* ===== SPECS ROW ===== */
+    .car-specs-row {
+      display: flex;
+      justify-content: center;
+      gap: 3.5rem;
+      margin-bottom: 0.9rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      letter-spacing: 0.16em;
+    }
+
+    .spec-item {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .spec-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main); /* Dark = clear visibility */
+      letter-spacing: 0.08em;
+    }
+
+    /* ===== CTA BUTTON ===== */
+    .car-cta-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    .car-cta-btn {
+      padding: 0.55rem 1.8rem;
+      border-radius: 999px;
+      border: none;
+      outline: none;
+      background: linear-gradient(to right, var(--accent), var(--accent-soft));
+      color: #ffffff;
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.45);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .car-cta-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(37, 99, 235, 0.5);
+    }
+
+    /* ===== NAV ARROWS & DOTS ===== */
+    .car-nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1rem;
+      color: #4b5563;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease,
+        box-shadow 0.2s ease;
+      z-index: 3;
+    }
+
+    .car-nav-arrow:hover {
+      background: #ffffff;
+      transform: translateY(-50%) translateX(-1px);
+      box-shadow: 0 8px 18px rgba(148, 163, 184, 0.7);
+    }
+
+    .car-nav-arrow.right {
+      right: 24px;
+    }
+
+    .car-nav-arrow.left {
+      left: 24px;
+    }
+
+    .car-nav-arrow span {
+      transform: translateY(-1px);
+    }
+
+    .car-dots {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 3;
+    }
+
+    .car-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.7);
+      cursor: pointer;
+      transition: width 0.25s ease, background 0.25s ease;
+    }
+
+    .car-dot.active {
+      width: 22px;
+      background: #2563eb;
+    }
+
+    /* ===== TEXT ANIMATION STATES ===== */
+    .car-slide-fade {
+      opacity: 1;
+      transition: opacity var(--transition-med), transform var(--transition-med);
+    }
+
+    .car-slide-fade.leaving {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .car-slide-fade.entering {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .car-slide-fade.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== RESPONSIVE ===== */
+   /* Tablet */
+/* Tablet */
+@media (max-width: 900px) {
+  .car-main-title{
+    top:22%;
+    font-size:clamp(2rem, 8vw, 4rem);
+  }
+  .car-image{
+    height:auto;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .car-main-title{
+    top:26%;
+    font-size:clamp(1.8rem, 10vw, 3rem);
+    letter-spacing:0.08em;
+  }
+  .car-image{
+    height:auto;
+  }
+}
+
+/* 390px to 312px */
+@media (max-width: 400px) {
+  .car-slider-frame{
+    padding:1.6rem;
+  }
+  .car-main-title{
+    top:30%;
+    white-space:normal;
+    font-size:clamp(1.4rem, 10vw, 2.2rem);
+    line-height:1.2;
+  }
+  .car-image{
+    height:auto;
+  }
+}
+
+/* exact small 312px */
+@media (max-width: 330px) {
+  .car-main-title{
+    top:32%;
+    font-size:1.7rem;
+    white-space:normal;
+  }
+}
+
+
+
+  </style>
+</head>
+<body>
+  <section class="car-slider-section">
+    <div class="car-slider-frame" id="carSliderFrame">
+      <!-- nav arrows -->
+      <button class="car-nav-arrow left" id="carPrevBtn">
+        <span>&lt;</span>
+      </button>
+      <button class="car-nav-arrow right" id="carNextBtn">
+        <span>&gt;</span>
+      </button>
+
+      <div class="car-slider-inner">
+        <!-- top text -->
+        <div class="car-top-text car-slide-fade active" id="carTopText">
+          SPORTS CAR SERIES
+        </div>
+        <div class="car-model-name car-slide-fade active" id="carModelName">
+          718 Cayman
+        </div>
+        <h1 class="car-main-title car-slide-fade active" id="carMainTitle">
+          SHARK BLUE
+        </h1>
+
+        <!-- image -->
+        <div class="car-visual">
+          <div class="car-image-wrapper active" id="carImageWrapper">
+            <!-- तुझ्या blue car ची image -->
+            <img
+              src="carimges/car-blue.png"
+              alt="Car"
+              class="car-image"
+              id="carImage"
+            />
+            <div class="car-floor-shadow"></div>
+          </div>
+        </div>
+
+        <!-- specs -->
+        <div class="car-specs-row">
+          <div class="spec-item">
+            <span class="spec-value car-slide-fade active" id="carSpeed">
+              275 KM/H
+            </span>
+            <span>TOP SPEED</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-value car-slide-fade active" id="carPower">
+              220 KW / 300 PS
+            </span>
+            <span>POWER</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-value car-slide-fade active" id="carTorque">
+              380 NM
+            </span>
+            <span>TORQUE</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-value car-slide-fade active" id="carEngine">
+              1.988 CM³
+            </span>
+            <span>ENGINE</span>
+          </div>
+        </div>
+
+        <!-- button -->
+        <div class="car-cta-wrapper">
+          <button class="car-cta-btn" id="carCtaBtn">SHARK BLUE</button>
+        </div>
+      </div>
+
+      <!-- dots -->
+      <div class="car-dots" id="carDots"></div>
+    </div>
+  </section>
+
+  <script>
+    // ========= CAR DATA – 5 cars + प्रत्येकासाठी gradient =========
+    const cars = [
+      {
+        tag: "SPORTS CAR SERIES",
+        modelName: "718 Cayman",
+        title: "SHARK BLUE",
+        image: "carimges/car-blue.png",
+        speed: "275 KM/H",
+        power: "220 KW / 300 PS",
+        torque: "380 NM",
+        engine: "1.988 CM³",
+        button: "SHARK BLUE",
+        background:
+          "radial-gradient(circle at top, #cfe3ff 0%, #f5f7fb 55%, #e3ecff 100%)",
+        pageBg: "radial-gradient(circle at top, #cbd5f5 0%, #e5e7eb 60%, #e5e7eb 100%)"
+      },
+      {
+        tag: "SPORTS CAR SERIES",
+        modelName: "718 Cayman S",
+        title: "CARMINE RED",
+        image: "carimges/car-red.png",
+        speed: "285 KM/H",
+        power: "257 KW / 350 PS",
+        torque: "420 NM",
+        engine: "2.497 CM³",
+        button: "CARMINE RED",
+        background:
+          "radial-gradient(circle at top, #ffd1d6 0%, #fdf2f3 55%, #f5d0d3 100%)",
+        pageBg: "radial-gradient(circle at top, #fca5a5 0%, #fee2e2 60%, #e5e7eb 100%)"
+      },
+      {
+        tag: "SPORTS CAR SERIES",
+        modelName: "718 Cayman",
+        title: "RACING YELLOW",
+        image: "carimges/car-yellow.png",
+        speed: "280 KM/H",
+        power: "235 KW / 320 PS",
+        torque: "400 NM",
+        engine: "2.497 CM³",
+        button: "RACING YELLOW",
+        background:
+          "radial-gradient(circle at top, #fff3bf 0%, #fffaf0 55%, #fde68a 100%)",
+        pageBg: "radial-gradient(circle at top, #facc15 0%, #fef9c3 60%, #e5e7eb 100%)"
+      },
+      {
+        tag: "SPORTS CAR SERIES",
+        modelName: "718 Cayman",
+        title: "GT SILVER",
+        image: "carimges/car-grey.png",
+        speed: "270 KM/H",
+        power: "220 KW / 300 PS",
+        torque: "380 NM",
+        engine: "1.988 CM³",
+        button: "GT SILVER",
+        background:
+          "radial-gradient(circle at top, #e5e7eb 0%, #f9fafb 55%, #d1d5db 100%)",
+        pageBg: "radial-gradient(circle at top, #d1d5db 0%, #e5e7eb 60%, #e5e7eb 100%)"
+      },
+      {
+        tag: "SPORTS CAR SERIES",
+        modelName: "718 Cayman",
+        title: "BRITISH GREEN",
+        image: "carimges/car-green.png",
+        speed: "275 KM/H",
+        power: "230 KW / 315 PS",
+        torque: "390 NM",
+        engine: "2.0L",
+        button: "BRITISH GREEN",
+        background:
+          "radial-gradient(circle at top, #b9f2d0 0%, #ecfdf5 55%, #bbf7d0 100%)",
+        pageBg: "radial-gradient(circle at top, #4ade80 0%, #dcfce7 60%, #e5e7eb 100%)"
+      }
+    ];
+
+    const topTextEl = document.getElementById("carTopText");
+    const modelNameEl = document.getElementById("carModelName");
+    const mainTitleEl = document.getElementById("carMainTitle");
+    const imageEl = document.getElementById("carImage");
+    const imageWrapperEl = document.getElementById("carImageWrapper");
+    const speedEl = document.getElementById("carSpeed");
+    const powerEl = document.getElementById("carPower");
+    const torqueEl = document.getElementById("carTorque");
+    const engineEl = document.getElementById("carEngine");
+    const ctaBtnEl = document.getElementById("carCtaBtn");
+
+    const prevBtn = document.getElementById("carPrevBtn");
+    const nextBtn = document.getElementById("carNextBtn");
+    const dotsContainer = document.getElementById("carDots");
+    const frameEl = document.getElementById("carSliderFrame");
+
+    let currentIndex = 0;
+    let autoSlideTimer = null;
+
+    // create dots
+    const dots = cars.map((_, idx) => {
+      const dot = document.createElement("div");
+      dot.className = "car-dot" + (idx === 0 ? " active" : "");
+      dot.addEventListener("click", () => goToSlide(idx));
+      dotsContainer.appendChild(dot);
+      return dot;
+    });
+
+    function setActiveDot(i) {
+      dots.forEach((d, index) => {
+        d.classList.toggle("active", index === i);
+      });
+    }
+
+    function applyFadeState(el, stateClass) {
+      el.classList.remove("active", "entering", "leaving");
+      if (stateClass) el.classList.add(stateClass);
+    }
+
+    function applyBackgrounds(car) {
+      // frame आणि body चे background car नुसार बदल
+      frameEl.style.background = car.background;
+      document.body.style.background = car.pageBg;
+    }
+
+    function updateSlide(index) {
+      const car = cars[index];
+
+      // text fade out
+      [topTextEl, modelNameEl, mainTitleEl, speedEl, powerEl, torqueEl, engineEl].forEach(el =>
+        applyFadeState(el, "leaving")
+      );
+      imageWrapperEl.classList.remove("active");
+      imageWrapperEl.classList.add("entering");
+
+      setTimeout(() => {
+        // update content
+        topTextEl.textContent = car.tag;
+        modelNameEl.textContent = car.modelName;
+        mainTitleEl.textContent = car.title;
+        imageEl.src = car.image;
+        imageEl.alt = car.modelName;
+        speedEl.textContent = car.speed;
+        powerEl.textContent = car.power;
+        torqueEl.textContent = car.torque;
+        engineEl.textContent = car.engine;
+        ctaBtnEl.textContent = car.button;
+
+        // background gradients update
+        applyBackgrounds(car);
+
+        // fade in
+        [topTextEl, modelNameEl, mainTitleEl, speedEl, powerEl, torqueEl, engineEl].forEach(el =>
+          applyFadeState(el, "entering")
+        );
+        imageWrapperEl.classList.remove("entering");
+        imageWrapperEl.classList.add("active");
+
+        requestAnimationFrame(() => {
+          [topTextEl, modelNameEl, mainTitleEl, speedEl, powerEl, torqueEl, engineEl].forEach(el =>
+            applyFadeState(el, "active")
+          );
+        });
+
+        setActiveDot(index);
+      }, 230);
+    }
+
+    function nextSlide() {
+      currentIndex = (currentIndex + 1) % cars.length;
+      updateSlide(currentIndex);
+    }
+
+    function prevSlide() {
+      currentIndex = (currentIndex - 1 + cars.length) % cars.length;
+      updateSlide(currentIndex);
+    }
+
+    function goToSlide(index) {
+      if (index === currentIndex) return;
+      currentIndex = index;
+      updateSlide(currentIndex);
+      restartAutoSlide();
+    }
+
+    prevBtn.addEventListener("click", () => {
+      prevSlide();
+      restartAutoSlide();
+    });
+
+    nextBtn.addEventListener("click", () => {
+      nextSlide();
+      restartAutoSlide();
+    });
+
+    function startAutoSlide() {
+      autoSlideTimer = setInterval(nextSlide, 3500);
+    }
+
+    function restartAutoSlide() {
+      clearInterval(autoSlideTimer);
+      startAutoSlide();
+    }
+
+    // init
+    updateSlide(0);
+    startAutoSlide();
+  </script>
+</body>
+</html>
